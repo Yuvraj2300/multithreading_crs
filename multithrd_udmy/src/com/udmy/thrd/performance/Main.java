@@ -1,4 +1,4 @@
-package com.udmy.thrd.performace;
+package com.udmy.thrd.performance;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
