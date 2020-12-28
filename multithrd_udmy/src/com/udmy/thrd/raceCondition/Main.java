@@ -1,88 +1,87 @@
 package com.udmy.thrd.raceCondition;
 
-import java.util.Random;
-
 public class Main {
 
-	public static void main(String[] args) {
-		Metrics metrics = new Metrics();
+	public static void main(String[] args) throws InterruptedException {
+		InventoryCounter invCounter = new InventoryCounter();
+		IncrementingThread incThread = new IncrementingThread(invCounter);
+		DecrementingThread decThread = new DecrementingThread(invCounter);
 
-		BusinessLogic bl1 = new BusinessLogic(metrics);
-		BusinessLogic bl2 = new BusinessLogic(metrics);
-		
-		MetricsPrinter	metricsPrinter	=	new	MetricsPrinter(metrics);
-	
-		bl1.start();
-		bl2.start();
-		metricsPrinter.start();
+		incThread.start();
+		decThread.start();
+
+		incThread.join();
+		decThread.join();
+
+		System.out.println("We have following number of items in the inventory : " + invCounter.getItems());
+
 	}
 
-	public static class MetricsPrinter extends Thread {
-		private Metrics metrics;
+	public static class DecrementingThread extends Thread {
+		private InventoryCounter inventoryCounter;
 
-		public MetricsPrinter(Metrics metrics) {
+		public DecrementingThread(InventoryCounter inventoryCounter) {
 			super();
-			this.metrics = metrics;
-		}
-
-		@Override
-		public void run() {
-			while (true) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				double currentAverage = metrics.getAverage();
-
-				System.out.println("Average is :- " + currentAverage);
-			}
-		}
-
-	}
-
-	public static class BusinessLogic extends Thread {
-		private Metrics metrics;
-		private Random random = new Random();
-
-		public BusinessLogic(Metrics metrics) {
-			this.metrics = metrics;
+			this.inventoryCounter = inventoryCounter;
 		}
 
 		@Override
 		public void run() {
 
-			while (true) {
-				long start = System.currentTimeMillis();
-
-				try {
-					Thread.sleep(random.nextInt(10));
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				long end = System.currentTimeMillis();
-
-				metrics.addSample(end - start);
+			for (int i = 0; i < 10000; i++) {
+				inventoryCounter.decrement();
 			}
+
 		}
+
 	}
 
-	public static class Metrics {
-		private long count = 0;
-		private volatile double average = 0.0;
+	public static class IncrementingThread extends Thread {
+		private InventoryCounter inventoryCounter;
 
-		public synchronized void addSample(long sample) {
-			double currentSum = average * count;
-			count++;
-			average = (currentSum + sample) / count;
+		public IncrementingThread(InventoryCounter inventoryCounter) {
+			super();
+			this.inventoryCounter = inventoryCounter;
 		}
 
-		public double getAverage() {
-			return average;
+		@Override
+		public void run() {
+
+			for (int i = 0; i < 10000; i++) {
+				inventoryCounter.increment();
+			}
+
+		}
+
+	}
+
+	private static class InventoryCounter {
+		private int items = 0;
+
+		Object lock = new Object();
+
+		public void increment() {
+
+			synchronized (lock) {
+				items++;
+			}
+
+		}
+
+		public void decrement() {
+
+			synchronized (lock) {
+				items--;
+			}
+
+		}
+
+		public int getItems() {
+
+			synchronized (lock) {
+				return items;
+			}
+
 		}
 
 	}
