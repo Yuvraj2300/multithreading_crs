@@ -5,8 +5,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ExService {
-	public static void main(String[] args) throws InterruptedException {
-		CountDownLatch cdl = new CountDownLatch(5);
+	public static void main(String[] args) {
+		CountDownLatch cdl1 = new CountDownLatch(5);
 		CountDownLatch cdl2 = new CountDownLatch(5);
 		CountDownLatch cdl3 = new CountDownLatch(5);
 		CountDownLatch cdl4 = new CountDownLatch(5);
@@ -14,35 +14,40 @@ public class ExService {
 
 		System.out.println("Starting");
 
-		es.execute(new MyThread(cdl, "A"));
+		es.execute(new MyThread(cdl1, "A"));
 		es.execute(new MyThread(cdl2, "B"));
 		es.execute(new MyThread(cdl3, "C"));
 		es.execute(new MyThread(cdl4, "D"));
 
-		cdl.await();
-		cdl2.await();
-		cdl3.await();
-		cdl4.await();
+		try {
+			cdl1.await();
+			cdl2.await();
+			cdl3.await();
+			cdl4.await();
+		} catch (Exception e) {
+
+		}
 
 		es.shutdown();
-		System.out.println("Done");
+		System.out.println("Shutdown");
 
 	}
 }
 
 class MyThread implements Runnable {
-	String name;
 	CountDownLatch cdl;
+	String name;
 
 	public MyThread(CountDownLatch cdl, String name) {
-		this.name = name;
 		this.cdl = cdl;
-		new Thread(this, name);
+		this.name = name;
 	}
 
+	@Override
 	public void run() {
-		for (int i = 5; i > 0; i--) {
-			System.out.println(name + ": " + i);
+
+		for (int i = 0; i < 5; i++) {
+			System.out.println(name + ":  is at value :- " + i);
 			cdl.countDown();
 		}
 	}
